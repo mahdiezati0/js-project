@@ -68,6 +68,8 @@ public class DatabaseInitializer : IDatabaseInitializer
             new Claim(ClaimTypes.Email,userApp.Email),
             new Claim(ClaimTypes.NameIdentifier,userApp.Id),
             new Claim(ClaimTypes.Role,AppRoles.USER),
+            new Claim("RefreshToken", string.Empty),
+            new Claim("RefreshTokenExpirationDate", DateTime.MinValue.ToString())
         };
         _userManager.AddClaimsAsync(userApp, claims).GetAwaiter().GetResult();
         _logger.LogInformation($"Adding Default Claims To {userApp.Email} Was Successful");

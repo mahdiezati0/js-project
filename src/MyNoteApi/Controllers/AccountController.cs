@@ -36,4 +36,12 @@ public class AccountController : ControllerBase
     [Authorize(Roles =AppRoles.USER)]
     [HttpGet("CheckAuthenticate")]
     public IActionResult CheckAuthenticate() => Ok(Result.Success().ToResult());
+    [HttpPatch("RefreshToken")]
+    public async Task<IActionResult> RefreshToken(RefreshTokenViewModel model)
+    {
+        var result = await _userService.RefreshLogin(model);
+        if (result.IsSuccess)
+            return Ok(result.ToResult());
+        return Unauthorized(result.ToResult());
+    }
 }
