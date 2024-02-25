@@ -12,4 +12,15 @@ public static class ExtentionMethods
             Error = error
         };
     }
+    public static object ToResult<T>(this Result<T> result)
+    {
+        result.TryGetValue(out var value, out var error);
+        return new
+        {
+            result.IsFailure,
+            result.IsSuccess,
+            Error = error,
+            Value = value
+        };
+    }
 }

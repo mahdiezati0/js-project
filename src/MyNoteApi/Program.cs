@@ -1,12 +1,15 @@
 using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MyNoteApi.Data;
 using MyNoteApi.Data.Initial;
 using MyNoteApi.Models.Entities.User;
 using MyNoteApi.Repositories.Interfaces.User;
 using MyNoteApi.Repositories.Services;
 using MyNoteApi.Repositories.Services.User;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +34,25 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
+builder.Services.AddAuthentication(options => // Add Jwt Authentication
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(option =>
+{
+    option.SaveToken = true;
+    option.RequireHttpsMetadata = false;
+    option.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["JWT:Audience"],
+        ValidIssuer = builder.Configuration["JWT:Issuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"])),
+        ClockSkew= TimeSpan.FromMinutes(0),
+    };
+});
 var app = builder.Build();
 using (var serviceScope = app.Services.CreateScope()) // Create/Seed Database (if necessary)
 {
@@ -46,7 +68,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
