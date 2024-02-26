@@ -28,7 +28,10 @@ builder.Services.Configure<ApiBehaviorOptions>(options => // Show Errors in Resu
         return new JsonResult(Result.Failure(string.Join('\n', errors)).ToResult());
     };
 });
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+bool runFromDocker;
+runFromDocker = bool.TryParse(Environment.GetEnvironmentVariable("IsDocker"), out runFromDocker) ? runFromDocker : false; // if app runs from docker , connection string changes to sqlserver in container
+var connectionString = runFromDocker?
+    builder.Configuration.GetConnectionString("DockerConnection") : builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(option => option.UseSqlServer(connectionString)); // Use Sql For Store Data
 builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbContext>(); // Use Microsoft Identity For Authentication
 builder.Services.AddScoped<IUserService, UserService>();
@@ -82,7 +85,7 @@ builder.Services.AddAuthentication(options => // Add Jwt Authentication
         ValidAudience = builder.Configuration["JWT:Audience"],
         ValidIssuer = builder.Configuration["JWT:Issuer"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"])),
-        ClockSkew= TimeSpan.FromMinutes(0),
+        ClockSkew = TimeSpan.FromMinutes(0),
     };
 });
 var app = builder.Build();
