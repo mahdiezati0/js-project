@@ -1,5 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyNoteApi.Models.Entities.User;
@@ -33,6 +34,10 @@ public class UserService : IUserService
         if (!await _userManager.CheckPasswordAsync(user, model.Password))
         {
             return Result.Failure<LoginResponseViewModel>("Wrong password !");
+        }
+        if(!user.EmailConfirmed)
+        {
+            return Result.Failure<LoginResponseViewModel>("Please Confirm Email");
         }
         var refreshToken = GenerateRefreshToken();
         await _userManager.ReplaceClaimAsync(user, new Claim("RefreshToken", string.Empty), new Claim("RefreshToken", refreshToken));
@@ -98,7 +103,6 @@ public class UserService : IUserService
             new Claim("RefreshTokenExpirationDate", DateTime.MinValue.ToString())
         };
         await _userManager.AddClaimsAsync(user, userClaims);
-        // Send Verification Email ...
 
         return Result.Success();
     }
@@ -170,5 +174,31 @@ public class UserService : IUserService
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
         return Convert.ToBase64String(randomNumber);
+    }
+
+    public async Task<Result> ConfirmEmail(VerifyEmailViewModel model)
+    {
+        var user = await _userManager.FindByIdAsync(model.Id);
+        if (user is null)
+            return Result.Failure("User Not Found !");
+
+        var token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
+        var result =await _userManager.ConfirmEmailAsync(user, token);
+        if (result.Succeeded)
+            return Result.Success();
+        return Result.Failure(string.Join('\n', result.Errors.Select(err => err.Description).ToList()));
+    }
+
+    public async Task<Result> SendConfirmEmail(ConfirmEmailViewModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user is null)
+            return Result.Failure("User Not Found !");
+
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        // Send UserId and Token 
+        return Result.Success();
     }
 }

@@ -44,4 +44,21 @@ public class AccountController : ControllerBase
             return Ok(result.ToResult());
         return Unauthorized(result.ToResult());
     }
+    [HttpPost("SendEmailVerificationCode")]
+    public async Task<IActionResult> SendEmailVerificationCode(ConfirmEmailViewModel model)
+    {
+        var result = await _userService.SendConfirmEmail(model);
+        if(result.IsSuccess)
+            return Accepted(result.ToResult());
+        return BadRequest(result.ToResult());
+    }
+    [HttpPost("VerifyEmail")]
+    public async Task<IActionResult> VerifyEmail(VerifyEmailViewModel model)
+    {
+        var result = await _userService.ConfirmEmail(model);
+        if(result.IsSuccess)
+            return Accepted(result.ToResult());
+        return BadRequest(result.ToResult());
+    }
+
 }
