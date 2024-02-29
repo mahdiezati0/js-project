@@ -2,7 +2,7 @@
 
 namespace MyNoteApi.Models.ViewModels.User;
 
-public class ConfirmEmailViewModel
+public class ConfirmationViewModel
 {
     [Required]
     [EmailAddress]

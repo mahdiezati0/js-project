@@ -45,7 +45,7 @@ public class AccountController : ControllerBase
         return Unauthorized(result.ToResult());
     }
     [HttpPost("SendEmailVerificationCode")]
-    public async Task<IActionResult> SendEmailVerificationCode(ConfirmEmailViewModel model)
+    public async Task<IActionResult> SendEmailVerificationCode(ConfirmationViewModel model)
     {
         var result = await _userService.SendConfirmEmail(model);
         if(result.IsSuccess)
@@ -56,6 +56,22 @@ public class AccountController : ControllerBase
     public async Task<IActionResult> VerifyEmail(VerifyEmailViewModel model)
     {
         var result = await _userService.ConfirmEmail(model);
+        if(result.IsSuccess)
+            return Accepted(result.ToResult());
+        return BadRequest(result.ToResult());
+    }
+    [HttpPost("SendEmailForgetPassword")]
+    public async Task<IActionResult> SendEmailForgetPassword(ConfirmationViewModel model)
+    {
+        var result = await _userService.SendForgetPasswordEmail(model);
+        if(result.IsSuccess)
+            return Accepted(result.ToResult());
+        return BadRequest(result.ToResult());
+    }
+    [HttpPost("ForogetPassword")]
+    public async Task<IActionResult> ForogetPassword(ForgetPasswordViewModel model)
+    {
+        var result = await _userService.ForgetPassword(model);
         if(result.IsSuccess)
             return Accepted(result.ToResult());
         return BadRequest(result.ToResult());

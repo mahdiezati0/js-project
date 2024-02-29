@@ -35,7 +35,7 @@ public class UserService : IUserService
         {
             return Result.Failure<LoginResponseViewModel>("Wrong password !");
         }
-        if(!user.EmailConfirmed)
+        if (!user.EmailConfirmed)
         {
             return Result.Failure<LoginResponseViewModel>("Please Confirm Email");
         }
@@ -183,19 +183,45 @@ public class UserService : IUserService
             return Result.Failure("User Not Found !");
 
         var token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
-        var result =await _userManager.ConfirmEmailAsync(user, token);
+        var result = await _userManager.ConfirmEmailAsync(user, token);
         if (result.Succeeded)
             return Result.Success();
         return Result.Failure(string.Join('\n', result.Errors.Select(err => err.Description).ToList()));
     }
 
-    public async Task<Result> SendConfirmEmail(ConfirmEmailViewModel model)
+    public async Task<Result> SendConfirmEmail(ConfirmationViewModel model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user is null)
             return Result.Failure("User Not Found !");
 
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        // Send UserId and Token 
+        return Result.Success();
+    }
+
+    public async Task<Result> ForgetPassword(ForgetPasswordViewModel model)
+    {
+        var user = await _userManager.FindByIdAsync(model.Id);
+        if (user is null)
+            return Result.Failure("User Not Found !");
+
+        var token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
+        var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+        if (result.Succeeded)
+            return Result.Success();
+        return Result.Failure(string.Join('\n', result.Errors.Select(err => err.Description).ToList()));
+    }
+
+    public async Task<Result> SendForgetPasswordEmail(ConfirmationViewModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user is null)
+            return Result.Failure("User Not Found !");
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
         // Send UserId and Token 

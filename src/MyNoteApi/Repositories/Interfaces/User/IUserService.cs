@@ -9,5 +9,7 @@ public interface IUserService
     public Task<Result<LoginResponseViewModel>> Login(LoginViewModel model);
     public Task<Result<LoginResponseViewModel>> RefreshLogin(RefreshTokenViewModel model);
     public Task<Result> ConfirmEmail(VerifyEmailViewModel model);
-    public Task<Result> SendConfirmEmail(ConfirmEmailViewModel model);
+    public Task<Result> SendConfirmEmail(ConfirmationViewModel model);
+    public Task<Result> ForgetPassword(ForgetPasswordViewModel model);
+    public Task<Result> SendForgetPasswordEmail(ConfirmationViewModel model);
 }
