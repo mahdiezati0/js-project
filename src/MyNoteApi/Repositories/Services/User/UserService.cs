@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyNoteApi.Models.Entities.User;
 using MyNoteApi.Models.ViewModels.User;
+using MyNoteApi.Repositories.Interfaces.Email;
 using MyNoteApi.Repositories.Interfaces.User;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace MyNoteApi.Repositories.Services.User;
 
@@ -17,11 +19,13 @@ public class UserService : IUserService
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
-    public UserService(UserManager<AppUser> userManager, IConfiguration configuration)
+    public UserService(UserManager<AppUser> userManager, IConfiguration configuration, IEmailService emailService)
     {
         _userManager = userManager;
         _configuration = configuration;
+        _emailService = emailService;
     }
 
     public async Task<Result<LoginResponseViewModel>> Login(LoginViewModel model)
@@ -41,7 +45,7 @@ public class UserService : IUserService
         }
         var refreshToken = GenerateRefreshToken();
         await _userManager.ReplaceClaimAsync(user, new Claim("RefreshToken", string.Empty), new Claim("RefreshToken", refreshToken));
-        await _userManager.ReplaceClaimAsync(user, new Claim("RefreshTokenExpirationDate", DateTime.MinValue.ToString()), new Claim("RefreshTokenExpirationDate", DateTime.Now.AddMinutes(7).ToString()));
+        await _userManager.ReplaceClaimAsync(user, new Claim("RefreshTokenExpirationDate", DateTime.MinValue.ToString()), new Claim("RefreshTokenExpirationDate", DateTime.Now.AddMinutes(59).ToString()));
         var userRoles = await _userManager.GetRolesAsync(user);
         var authClaims = new List<Claim>
         {
@@ -199,6 +203,9 @@ public class UserService : IUserService
         token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
         // Send UserId and Token 
+        var response = new VerifyEmailViewModel { Id = user.Id, Token = token };
+        var message = JsonSerializer.Serialize(response);
+        _emailService.Send(new Models.ViewModels.Email.SendEmailViewModel(model.Email, "Email Confirmation", message));
         return Result.Success();
     }
 
@@ -225,6 +232,9 @@ public class UserService : IUserService
         token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
         // Send UserId and Token 
+        var response = new ForgetPasswordViewModel { Id = user.Id, Token = token, NewPassword = "Y0UrStR0NgPaSsW0Rd!" };
+        var message = JsonSerializer.Serialize(response);
+        _emailService.Send(new Models.ViewModels.Email.SendEmailViewModel(model.Email, "Password Reset", message));
         return Result.Success();
     }
 }

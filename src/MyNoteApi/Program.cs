@@ -8,8 +8,10 @@ using Microsoft.OpenApi.Models;
 using MyNoteApi.Data;
 using MyNoteApi.Data.Initial;
 using MyNoteApi.Models.Entities.User;
+using MyNoteApi.Repositories.Interfaces.Email;
 using MyNoteApi.Repositories.Interfaces.User;
 using MyNoteApi.Repositories.Services;
+using MyNoteApi.Repositories.Services.Email;
 using MyNoteApi.Repositories.Services.User;
 using System.Reflection;
 using System.Text;
@@ -35,6 +37,7 @@ var connectionString = runFromDocker?
     builder.Configuration.GetConnectionString("DockerConnection") : builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(option => option.UseSqlServer(connectionString)); // Use Sql For Store Data
 builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders(); // Use Microsoft Identity For Authentication
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserService, UserService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
