@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <None Remove="Program.cs~RF3891386.TMP" />
+    <None Remove="Repositories\Services\Note\MemoService.cs~RF104c998.TMP" />
   </ItemGroup>
 
   <ItemGroup>

@@ -8,4 +8,6 @@ public interface IMemoService
     Task<Result<string>> CreateMemo(NewMemoDto model);
     Task<Result<MemoDto>> GetMemoById(GetMemoDto model);
     Task<Result<IList<MemoDto>>> GetMemos(GetMemosDto model);
+    Task<Result> ModifyMemoTitle(UpdateMemoTitleDto model);
+    Task<Result> ModifyMemoContent(UpdateMemoContentDto model);
 }

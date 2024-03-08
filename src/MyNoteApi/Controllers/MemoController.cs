@@ -44,11 +44,31 @@ public class MemoController : ControllerBase
     public async Task<IActionResult> GetById(int page = 1, int size = 5)
     {
         var userId = _currentUserService.UserId;
-        var request = new GetMemosDto(userId, page,size);
+        var request = new GetMemosDto(userId, page, size);
         var result = await _memoService.GetMemos(request);
         if (result.IsSuccess)
             return Ok(result.ToResult());
         return BadRequest(result.ToResult());
+    }
+    [HttpPatch("UpdateTitle")]
+    public async Task<IActionResult> UpdateTitle(UpdateMemoTitleViewModel model)
+    {
+        var userId = _currentUserService.UserId;
+        var request = new UpdateMemoTitleDto(userId, model.memoId, model.title);
+        var result = await _memoService.ModifyMemoTitle(request);
+        if (result.IsSuccess)
+            return Ok(result.ToResult());
+        return StatusCode(304, result.ToResult());
+    }
+    [HttpPatch("UpdateContent")]
+    public async Task<IActionResult> UpdateContent(UpdateMemoContentViewModel model)
+    {
+        var userId = _currentUserService.UserId;
+        var request = new UpdateMemoContentDto(userId, model.memoId, model.content);
+        var result = await _memoService.ModifyMemoContent(request);
+        if (result.IsSuccess)
+            return Ok(result.ToResult());
+        return StatusCode(304, result.ToResult());
     }
 
 }

@@ -1,11 +1,9 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using MyNoteApi.Data;
 using MyNoteApi.Models.DataTransfareObject.Note;
 using MyNoteApi.Models.Entities.Note;
 using MyNoteApi.Models.Entities.User;
-using MyNoteApi.Models.ViewModels.Note;
 using MyNoteApi.Repositories.Interfaces.Note;
 
 namespace MyNoteApi.Repositories.Services.Note;
@@ -61,7 +59,7 @@ public class MemoService : IMemoService
         var user = await GetUserById(model.userId);
         if (user.IsFailure) return Result.Failure<IList<MemoDto>>(user.Error);
 
-        var memos =_context.Memos
+        var memos = _context.Memos
             .Include(e => e.User)
             .AsNoTracking()
             .Where(e => e.User.Id == model.userId)
@@ -77,5 +75,35 @@ public class MemoService : IMemoService
             Id = e.Id.ToString()
         }).ToList();
         return result;
+    }
+
+    public async Task<Result> ModifyMemoTitle(UpdateMemoTitleDto model)
+    {
+        var user = await GetUserById(model.userId);
+        if (user.IsFailure) return Result.Failure(user.Error);
+
+        var memo = await _context.Memos
+            .SingleOrDefaultAsync(e => e.IsDeleted == false && e.Id == model.memoId.ToGuid() && e.User.Id == user.Value.Id);
+        if (memo is null)
+            return Result.Failure<MemoDto>("could not find note !");
+        memo.Title = model.title;
+        memo.ModifiedOn = DateTime.Now;
+        await _context.SaveChangesAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result> ModifyMemoContent(UpdateMemoContentDto model)
+    {
+        var user = await GetUserById(model.userId);
+        if (user.IsFailure) return Result.Failure(user.Error);
+
+        var memo = await _context.Memos
+            .SingleOrDefaultAsync(e => e.IsDeleted == false && e.Id == model.memoId.ToGuid() && e.User.Id == user.Value.Id);
+        if (memo is null)
+            return Result.Failure<MemoDto>("could not find note !");
+        memo.Content = model.content;
+        memo.ModifiedOn = DateTime.Now;
+        await _context.SaveChangesAsync();
+        return Result.Success();
     }
 }
