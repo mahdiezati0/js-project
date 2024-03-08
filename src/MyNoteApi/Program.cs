@@ -33,9 +33,9 @@ builder.Services.Configure<ApiBehaviorOptions>(options => // Show Errors in Resu
 });
 bool runFromDocker;
 runFromDocker = bool.TryParse(Environment.GetEnvironmentVariable("IsDocker"), out runFromDocker) ? runFromDocker : false; // if app runs from docker , connection string changes to sqlserver in container
-var connectionString = runFromDocker?
+var connectionString = runFromDocker ?
     builder.Configuration.GetConnectionString("DockerConnection") : builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(option => option.UseSqlServer(connectionString)); // Use Sql For Store Data
+builder.Services.AddDbContext<AppDbContext>(option => option.UseInMemoryDatabase("Local")); // Use Sql For Store Data
 builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders(); // Use Microsoft Identity For Authentication
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -100,11 +100,10 @@ using (var serviceScope = app.Services.CreateScope()) // Create/Seed Database (i
     dbInitializer.Initial();
 }
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
