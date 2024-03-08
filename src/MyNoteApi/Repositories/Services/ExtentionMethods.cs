@@ -23,4 +23,9 @@ public static class ExtentionMethods
             Value = value
         };
     }
+    public static Guid ToGuid(this string guid)
+    {
+        var isGuid = Guid.TryParse(guid, out var result);
+        return isGuid ? result : Guid.Empty;
+    }
 }

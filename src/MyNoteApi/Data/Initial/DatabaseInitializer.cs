@@ -96,6 +96,6 @@ public class DatabaseInitializer : IDatabaseInitializer
         };
         _context.Memos.Add(memo);
         _context.SaveChanges();
-        _logger.LogInformation($"Memo with title : {memo.Title} Created Successfully!");
+        _logger.LogInformation($"Memo with id : {memo.Id} Created Successfully!");
     }
 }

@@ -27,7 +27,18 @@ public class MemoController : ControllerBase
         var request = new NewMemoDto(userId, model.title, model.content);
         var result = await _memoService.CreateMemo(request);
         if (result.IsSuccess)
-            return Created(string.Empty,result.ToResult());
+            return Created(string.Empty, result.ToResult());
         return BadRequest(result.ToResult());
     }
+    [HttpGet("Get/{id}")]
+    public async Task<IActionResult> GetById(string id)
+    {
+        var userId = _currentUserService.UserId;
+        var request = new GetMemoDto(userId, id);
+        var result = await _memoService.GetMemoById(request);
+        if (result.IsSuccess)
+            return Ok(result.ToResult());
+        return BadRequest(result.ToResult());
+    }
+
 }
