@@ -9,9 +9,11 @@ using MyNoteApi.Data;
 using MyNoteApi.Data.Initial;
 using MyNoteApi.Models.Entities.User;
 using MyNoteApi.Repositories.Interfaces.Email;
+using MyNoteApi.Repositories.Interfaces.Note;
 using MyNoteApi.Repositories.Interfaces.User;
 using MyNoteApi.Repositories.Services;
 using MyNoteApi.Repositories.Services.Email;
+using MyNoteApi.Repositories.Services.Note;
 using MyNoteApi.Repositories.Services.User;
 using System.Reflection;
 using System.Text;
@@ -92,6 +94,9 @@ builder.Services.AddAuthentication(options => // Add Jwt Authentication
         ClockSkew = TimeSpan.FromMinutes(0),
     };
 });
+builder.Services.AddScoped<IMemoService, MemoService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 var app = builder.Build();
 using (var serviceScope = app.Services.CreateScope()) // Create/Seed Database (if necessary)
 {
