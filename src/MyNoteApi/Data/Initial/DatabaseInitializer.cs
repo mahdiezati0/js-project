@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using MyNoteApi.Models.Entities.Note;
 using MyNoteApi.Models.Entities.User;
 using System.Security.Claims;
 
@@ -28,6 +29,13 @@ public class DatabaseInitializer : IDatabaseInitializer
             return;
         }
         _logger.LogWarning("Database Doesn't Exist ! Creating ...");
+
+        CreateUserAndRole();
+        CreateMemo();
+        return;
+    }
+    private void CreateUserAndRole()
+    {
         var identityResult = new IdentityResult();
 
         var userRole = new AppRole
@@ -74,6 +82,20 @@ public class DatabaseInitializer : IDatabaseInitializer
         _userManager.AddClaimsAsync(userApp, claims).GetAwaiter().GetResult();
         _logger.LogInformation($"Adding Default Claims To {userApp.Email} Was Successful");
 
-        return;
+    }
+    private void CreateMemo()
+    {
+        _logger.LogInformation("Creating First Memo !");
+        var user = _userManager.Users.First();
+        var memo = new Memo
+        {
+            Content = "<p>Hello To MyNote</p>",
+            CreatedOn=DateTime.Now,
+            Title="Introduction",
+            User=user
+        };
+        _context.Memos.Add(memo);
+        _context.SaveChanges();
+        _logger.LogInformation($"Memo with title : {memo.Title} Created Successfully!");
     }
 }
