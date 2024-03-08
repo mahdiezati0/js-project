@@ -40,5 +40,15 @@ public class MemoController : ControllerBase
             return Ok(result.ToResult());
         return BadRequest(result.ToResult());
     }
+    [HttpGet("Get/{page}/{size}")]
+    public async Task<IActionResult> GetById(int page = 1, int size = 5)
+    {
+        var userId = _currentUserService.UserId;
+        var request = new GetMemosDto(userId, page,size);
+        var result = await _memoService.GetMemos(request);
+        if (result.IsSuccess)
+            return Ok(result.ToResult());
+        return BadRequest(result.ToResult());
+    }
 
 }
