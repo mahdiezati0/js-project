@@ -45,7 +45,9 @@ public class UserService : IUserService
         }
         var refreshToken = GenerateRefreshToken();
         await _userManager.ReplaceClaimAsync(user, new Claim("RefreshToken", string.Empty), new Claim("RefreshToken", refreshToken));
-        await _userManager.ReplaceClaimAsync(user, new Claim("RefreshTokenExpirationDate", DateTime.MinValue.ToString()), new Claim("RefreshTokenExpirationDate", DateTime.Now.AddMinutes(59).ToString()));
+        var defaultRefreshTokenExTime = !int.TryParse(_configuration["JWT:RefreshTokenExpirationMinutes"], out var validRefreshTokenInMinutes);
+        DateTime refreshTokenExpiryDate = DateTime.Now.AddMinutes(defaultRefreshTokenExTime ? 10 : validRefreshTokenInMinutes);
+        await _userManager.ReplaceClaimAsync(user, new Claim("RefreshTokenExpirationDate", DateTime.MinValue.ToString()), new Claim("RefreshTokenExpirationDate", refreshTokenExpiryDate.ToString()));
         var userRoles = await _userManager.GetRolesAsync(user);
         var authClaims = new List<Claim>
         {
@@ -63,7 +65,8 @@ public class UserService : IUserService
         {
             Token = new JwtSecurityTokenHandler().WriteToken(token),
             RefreshToken = refreshToken,
-            ExpirationDate = token.ValidTo
+            TokenExpirationDate = token.ValidTo,
+            RefreshTokenExpirationDate = refreshTokenExpiryDate
         };
         return Result.Success(result);
     }
@@ -139,12 +142,16 @@ public class UserService : IUserService
         }
         var newRefreshToken = GenerateRefreshToken();
         await _userManager.ReplaceClaimAsync(user, refreshToken, new Claim("RefreshToken", newRefreshToken));
+        var defaultRefreshTokenExTime = !int.TryParse(_configuration["JWT:RefreshTokenExpirationMinutes"], out var validRefreshTokenInMinutes);
+        DateTime refreshTokenExpiryDate = DateTime.Now.AddMinutes(defaultRefreshTokenExTime ? 10 : validRefreshTokenInMinutes);
+        await _userManager.ReplaceClaimAsync(user, refreshTokenExpirationDate, new Claim("RefreshTokenExpirationDate", refreshTokenExpiryDate.ToString()));
         var token = GetToken(tokenPrincipalResult.Value.Claims.ToList());
         return new LoginResponseViewModel
         {
             RefreshToken = newRefreshToken,
             Token = new JwtSecurityTokenHandler().WriteToken(token),
-            ExpirationDate = token.ValidTo
+            TokenExpirationDate = token.ValidTo,
+            RefreshTokenExpirationDate= refreshTokenExpiryDate
         };
     }
     private Result<ClaimsPrincipal> GetPrincipalFromExpiredToken(string? token)
