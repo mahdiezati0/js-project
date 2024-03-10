@@ -39,10 +39,10 @@ public class UserService : IUserService
         {
             return Result.Failure<LoginResponseViewModel>("Wrong password !");
         }
-        if (!user.EmailConfirmed)
-        {
-            return Result.Failure<LoginResponseViewModel>("Please Confirm Email");
-        }
+        // if (!user.EmailConfirmed)
+        // {
+        //     return Result.Failure<LoginResponseViewModel>("Please Confirm Email");
+        // }
         var refreshToken = GenerateRefreshToken();
         await _userManager.ReplaceClaimAsync(user, new Claim("RefreshToken", string.Empty), new Claim("RefreshToken", refreshToken));
         var defaultRefreshTokenExTime = !int.TryParse(_configuration["JWT:RefreshTokenExpirationMinutes"], out var validRefreshTokenInMinutes);
