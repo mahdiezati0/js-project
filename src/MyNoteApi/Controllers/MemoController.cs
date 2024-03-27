@@ -20,6 +20,13 @@ public class MemoController : ControllerBase
         _memoService = memoService;
         _currentUserService = currentUserService;
     }
+    /// <summary>
+    /// Create new note
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    /// <response code="201">Indicate that note created successfully</response>
+    /// <response code="400">If model is not valid</response>
     [HttpPost("New")]
     public async Task<IActionResult> Create(NewMemoViewModel model)
     {
@@ -30,6 +37,13 @@ public class MemoController : ControllerBase
             return Created(string.Empty, result.ToResult());
         return BadRequest(result.ToResult());
     }
+    /// <summary>
+    /// Fetch note by id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <response code="200">note detail</response>
+    /// <response code="400">note not found or not accessible</response>
     [HttpGet("Get/{id}")]
     public async Task<IActionResult> GetById(string id)
     {
@@ -40,6 +54,14 @@ public class MemoController : ControllerBase
             return Ok(result.ToResult());
         return BadRequest(result.ToResult());
     }
+    /// <summary>
+    /// Get all user's notes
+    /// </summary>
+    /// <param name="page"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    /// <response code="200">All user's notes</response>
+    /// <response code="400">user not access</response>
     [HttpGet("Get/{page}/{size}")]
     public async Task<IActionResult> GetById(int page = 1, int size = 5)
     {
@@ -50,6 +72,13 @@ public class MemoController : ControllerBase
             return Ok(result.ToResult());
         return BadRequest(result.ToResult());
     }
+    /// <summary>
+    /// Modify note
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    /// <response code="200">note changed</response>
+    /// <response code="400">model is not valid</response>
     [HttpPatch("Update")]
     public async Task<IActionResult> UpdateContent(UpdateMemoViewModel model)
     {

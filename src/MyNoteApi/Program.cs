@@ -1,6 +1,5 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +16,6 @@ using MyNoteApi.Repositories.Services;
 using MyNoteApi.Repositories.Services.Email;
 using MyNoteApi.Repositories.Services.Note;
 using MyNoteApi.Repositories.Services.User;
-using System.Net;
 using System.Reflection;
 using System.Text;
 
