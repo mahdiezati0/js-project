@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MyNoteApi.Data;
 using MyNoteApi.Models.Entities.User;
+using MyNoteApi.Models.ViewModels.Email;
 using MyNoteApi.Models.ViewModels.User;
 using MyNoteApi.Repositories.Interfaces.Email;
 using MyNoteApi.Repositories.Interfaces.User;
@@ -20,12 +22,14 @@ public class UserService : IUserService
     private readonly UserManager<AppUser> _userManager;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly AppDbContext _context;
 
-    public UserService(UserManager<AppUser> userManager, IConfiguration configuration, IEmailService emailService)
+    public UserService(UserManager<AppUser> userManager, IConfiguration configuration, IEmailService emailService, AppDbContext context)
     {
         _userManager = userManager;
         _configuration = configuration;
         _emailService = emailService;
+        _context = context;
     }
 
     public async Task<Result<LoginResponseViewModel>> Login(LoginViewModel model)
@@ -147,7 +151,7 @@ public class UserService : IUserService
             RefreshToken = newRefreshToken,
             Token = new JwtSecurityTokenHandler().WriteToken(token),
             TokenExpirationDate = token.ValidTo,
-            RefreshTokenExpirationDate= refreshTokenExpiryDate
+            RefreshTokenExpirationDate = refreshTokenExpiryDate
         };
     }
     private Result<ClaimsPrincipal> GetPrincipalFromExpiredToken(string? token)
@@ -185,59 +189,85 @@ public class UserService : IUserService
 
     public async Task<Result> ConfirmEmail(VerifyEmailViewModel model)
     {
-        var user = await _userManager.FindByIdAsync(model.Id);
+        var user = await _context.Users.SingleOrDefaultAsync(e => e.NormalizedEmail == model.Email.ToUpper());
         if (user is null)
             return Result.Failure("User Not Found !");
 
-        var token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
-        var result = await _userManager.ConfirmEmailAsync(user, token);
-        if (result.Succeeded)
-            return Result.Success();
-        return Result.Failure(string.Join('\n', result.Errors.Select(err => err.Description).ToList()));
-    }
-
-    public async Task<Result> SendConfirmEmail(ConfirmationViewModel model)
-    {
-        var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user is null)
-            return Result.Failure("User Not Found !");
-
-        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-
-        // Send UserId and Token 
-        var response = new VerifyEmailViewModel { Id = user.Id, Token = token };
-        var message = JsonSerializer.Serialize(response);
-        _emailService.Send(new Models.ViewModels.Email.SendEmailViewModel(model.Email, "Email Confirmation", message));
+        var otpRequest = await _context.RequestOTPs
+            .FirstOrDefaultAsync(e =>
+            e.IsValid &&
+            e.User.Id == user.Id && e.RequestType == OTPType.ConfirmEmail &&
+            e.Code == model.Code && e.ExpirationDate > DateTime.Now);
+        if (otpRequest is null)
+            return Result.Failure("Code Expired Or Not Exist !");
+        otpRequest.IsValid = false;
+        user.EmailConfirmed = true;
+        await _context.SaveChangesAsync();
         return Result.Success();
     }
 
     public async Task<Result> ForgetPassword(ForgetPasswordViewModel model)
     {
-        var user = await _userManager.FindByIdAsync(model.Id);
-        if (user is null)
-            return Result.Failure("User Not Found !");
-
-        var token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
-        var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
-        if (result.Succeeded)
-            return Result.Success();
-        return Result.Failure(string.Join('\n', result.Errors.Select(err => err.Description).ToList()));
-    }
-
-    public async Task<Result> SendForgetPasswordEmail(ConfirmationViewModel model)
-    {
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user is null)
             return Result.Failure("User Not Found !");
 
-        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        var otpRequest = await _context.RequestOTPs
+            .FirstOrDefaultAsync(e => e.IsValid && e.RequestType == OTPType.ForgetPassword && e.User.Id == user.Id && e.Code == model.Code && e.ExpirationDate > DateTime.Now);
+        if (otpRequest is null)
+            return Result.Failure("Code Expired Or Not Exist !");
+        var removePasswordResult = await _userManager.RemovePasswordAsync(user);
+        if (removePasswordResult.Succeeded)
+        {
+            var passwordChangedResult = await _userManager.AddPasswordAsync(user, model.NewPassword);
+            if (!passwordChangedResult.Succeeded)
+            {
+                return Result.Failure(string.Join('\n', passwordChangedResult.Errors.Select(err => err.Description).ToList()));
+            }
+            otpRequest.IsValid = false;
+            await _context.SaveChangesAsync();
+            return Result.Success();
+        }
+        return Result.Failure("Error Ocurr !");
+    }
 
-        // Send UserId and Token 
-        var response = new ForgetPasswordViewModel { Id = user.Id, Token = token, NewPassword = "Y0UrStR0NgPaSsW0Rd!" };
-        var message = JsonSerializer.Serialize(response);
-        _emailService.Send(new Models.ViewModels.Email.SendEmailViewModel(model.Email, "Password Reset", message));
+    public async Task<Result> SendRequestToEmail(RequestEmailViewModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user is null)
+            return Result.Failure("User not found !");
+        var otpRequest = await _context.RequestOTPs
+            .FirstOrDefaultAsync(e => e.IsValid &&
+            e.User.Id == user.Id &&
+            e.ExpirationDate > DateTime.Now &&
+            (int)e.RequestType == (int)model.TypeOfRequest);
+        if (otpRequest is null)
+        {
+            var random = new Random();
+            otpRequest = new RequestOTP
+            {
+                Code = random.Next(10000, 99999).ToString(),
+                ExpirationDate = DateTime.Now.AddHours(2),
+                User = user,
+                IsValid = true,
+                RequestType = (OTPType)(int)model.TypeOfRequest
+            };
+            await _context.RequestOTPs.AddAsync(otpRequest);
+            await _context.SaveChangesAsync();
+        }
+        SendEmailViewModel emailModel;
+        switch (model.TypeOfRequest)
+        {
+            case RequestEmailType.ForgetPassword:
+                emailModel = new SendEmailViewModel(model.Email, "Password Reset", $"Your Code is : {otpRequest.Code}");
+                break;
+            case RequestEmailType.EmailConfirmation:
+                emailModel = new SendEmailViewModel(model.Email, "Email Confirmation", $"Your Code is : {otpRequest.Code}");
+                break;
+            default:
+                return Result.Failure("Cannot Find Request Type !");
+        }
+        _emailService.Send(emailModel);
         return Result.Success();
     }
 }

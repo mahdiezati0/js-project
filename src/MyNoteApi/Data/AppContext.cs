@@ -5,8 +5,9 @@ using MyNoteApi.Models.Entities.User;
 
 namespace MyNoteApi.Data;
 
-public class AppDbContext:IdentityDbContext<AppUser,AppRole,string>
+public class AppDbContext : IdentityDbContext<AppUser, AppRole, string>
 {
     public AppDbContext(DbContextOptions options) : base(options) { }
     public virtual DbSet<Memo> Memos { get; set; }
+    public virtual DbSet<RequestOTP> RequestOTPs { get; set; }
 }

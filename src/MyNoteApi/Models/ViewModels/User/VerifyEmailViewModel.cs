@@ -5,6 +5,8 @@ namespace MyNoteApi.Models.ViewModels.User;
 public class VerifyEmailViewModel
 {
     [Required]
-    public string Token { get; set; }
-    public string Id { get; set; }
+    public string Code { get; set; }
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; }
 }
