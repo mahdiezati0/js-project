@@ -50,25 +50,15 @@ public class MemoController : ControllerBase
             return Ok(result.ToResult());
         return BadRequest(result.ToResult());
     }
-    [HttpPatch("UpdateTitle")]
-    public async Task<IActionResult> UpdateTitle(UpdateMemoTitleViewModel model)
+    [HttpPatch("Update")]
+    public async Task<IActionResult> UpdateContent(UpdateMemoViewModel model)
     {
         var userId = _currentUserService.UserId;
-        var request = new UpdateMemoTitleDto(userId, model.memoId, model.title);
-        var result = await _memoService.ModifyMemoTitle(request);
+        var request = new UpdateMemoDto(userId, model.memoId, model.title, model.content);
+        var result = await _memoService.ModifyMemo(request);
         if (result.IsSuccess)
             return Ok(result.ToResult());
-        return StatusCode(304, result.ToResult());
-    }
-    [HttpPatch("UpdateContent")]
-    public async Task<IActionResult> UpdateContent(UpdateMemoContentViewModel model)
-    {
-        var userId = _currentUserService.UserId;
-        var request = new UpdateMemoContentDto(userId, model.memoId, model.content);
-        var result = await _memoService.ModifyMemoContent(request);
-        if (result.IsSuccess)
-            return Ok(result.ToResult());
-        return StatusCode(304, result.ToResult());
+        return BadRequest(result.ToResult());
     }
 
 }

@@ -77,22 +77,7 @@ public class MemoService : IMemoService
         return result;
     }
 
-    public async Task<Result> ModifyMemoTitle(UpdateMemoTitleDto model)
-    {
-        var user = await GetUserById(model.userId);
-        if (user.IsFailure) return Result.Failure(user.Error);
-
-        var memo = await _context.Memos
-            .SingleOrDefaultAsync(e => e.IsDeleted == false && e.Id == model.memoId.ToGuid() && e.User.Id == user.Value.Id);
-        if (memo is null)
-            return Result.Failure<MemoDto>("could not find note !");
-        memo.Title = model.title;
-        memo.ModifiedOn = DateTime.Now;
-        await _context.SaveChangesAsync();
-        return Result.Success();
-    }
-
-    public async Task<Result> ModifyMemoContent(UpdateMemoContentDto model)
+    public async Task<Result> ModifyMemo(UpdateMemoDto model)
     {
         var user = await GetUserById(model.userId);
         if (user.IsFailure) return Result.Failure(user.Error);
@@ -102,6 +87,7 @@ public class MemoService : IMemoService
         if (memo is null)
             return Result.Failure<MemoDto>("could not find note !");
         memo.Content = model.content;
+        memo.Title = model.title;
         memo.ModifiedOn = DateTime.Now;
         await _context.SaveChangesAsync();
         return Result.Success();
