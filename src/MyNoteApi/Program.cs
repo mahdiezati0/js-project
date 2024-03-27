@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using MyNoteApi.Data;
 using MyNoteApi.Data.Initial;
 using MyNoteApi.Models.Entities.User;
+using MyNoteApi.Repositories.Filter;
 using MyNoteApi.Repositories.Interfaces.Email;
 using MyNoteApi.Repositories.Interfaces.Note;
 using MyNoteApi.Repositories.Interfaces.User;
@@ -15,6 +17,7 @@ using MyNoteApi.Repositories.Services;
 using MyNoteApi.Repositories.Services.Email;
 using MyNoteApi.Repositories.Services.Note;
 using MyNoteApi.Repositories.Services.User;
+using System.Net;
 using System.Reflection;
 using System.Text;
 
@@ -22,7 +25,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(config =>
+{
+    config.Filters.Add(typeof(ExeptionHandler)); // Custom Handler For Logging Error and Proper Response
+});
 builder.Services.Configure<ApiBehaviorOptions>(options => // Show Errors in Result Format
 {
     options.InvalidModelStateResponseFactory = (actionContext) =>

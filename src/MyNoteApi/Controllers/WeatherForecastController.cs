@@ -29,5 +29,7 @@ namespace MyNoteApi.Controllers
             })
             .ToArray();
         }
+        [HttpGet("ThrowError")]
+        public IActionResult ReturnError() => throw new NotImplementedException();
     }
 }
