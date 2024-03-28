@@ -9,4 +9,5 @@ public interface IMemoService
     Task<Result<MemoDto>> GetMemoById(GetMemoDto model);
     Task<Result<IList<MemoDto>>> GetMemos(GetMemosDto model);
     Task<Result> ModifyMemo(UpdateMemoDto model);
+    Task<Result> DeleteMemo(string userId,string memoId);
 }

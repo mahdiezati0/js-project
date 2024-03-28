@@ -89,5 +89,20 @@ public class MemoController : ControllerBase
             return Ok(result.ToResult());
         return BadRequest(result.ToResult());
     }
-
+    /// <summary>
+    /// Delete note
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <response code="200">note removed</response>
+    /// <response code="400">note not found/accessible </response>
+    [HttpDelete("Delete/{id}")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var userId = _currentUserService.UserId;
+        var result =await _memoService.DeleteMemo(userId, id);
+        if (result.IsSuccess)
+            return Ok(result.ToResult());
+        return BadRequest(result.ToResult());
+    }
 }

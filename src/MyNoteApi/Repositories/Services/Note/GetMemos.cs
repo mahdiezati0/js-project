@@ -14,7 +14,7 @@ public partial class MemoService : IMemoService
         var memos = _context.Memos
             .Include(e => e.User)
             .AsNoTracking()
-            .Where(e => e.User.Id == model.userId)
+            .Where(e => e.User.Id == model.userId && e.IsDeleted == false)
             .Skip((model.page - 1) * model.size)
             .Take(model.size)
             .AsQueryable();
